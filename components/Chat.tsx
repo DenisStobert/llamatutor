@@ -63,21 +63,25 @@ const Chat = ({
         await navigator.clipboard.writeText(chatContent);
         setCopiedMessage(true);
         setTimeout(() => setCopiedMessage(false), 2000);
-      } catch {
-        setCopiedMessage(false);
-      }
-    } else if (action === 'share' && navigator.share) {
-      try {
-        await navigator.share({
-          title: "Chat Conversation",
-          text: chatContent,
-          url: window.location.href,
-        });
       } catch (err) {
-        console.error("Error sharing:", err);
+        setCopiedMessage(false);
+        alert("Copy failed. Your browser might not support clipboard access.");
       }
-    } else {
-      alert("Sharing is not supported on this device.");
+    } else if (action === 'share') {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Chat Conversation",
+            text: chatContent,
+            url: window.location.href,
+          });
+        } catch (err) {
+          console.error("Error sharing:", err);
+          alert("Error sharing the content. Please try again later.");
+        }
+      } else {
+        alert("Sharing is not supported on this device or browser.");
+      }
     }
   };
 
