@@ -21,23 +21,47 @@ const FinalInputArea: FC<TInputAreaProps> = ({
   setMessages,
   handleChat,
 }) => {
-  function onSubmit() {
-    let latestMessages = [...messages, { role: "user", content: promptValue }];
+
+  const onSubmit = () => {
+    const latestMessages = [...messages, { role: "user", content: promptValue }];
     setPromptValue("");
     setMessages(latestMessages);
     handleChat(latestMessages);
-  }
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
-      if (e.shiftKey) {
-        return;
-      } else {
-        e.preventDefault();
-        onSubmit();
-      }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit();
     }
   };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPromptValue(e.target.value);
+  };
+
+  const renderSubmitButton = () => (
+    <button
+      disabled={disabled}
+      type="submit"
+      className="relative ml-3 flex size-[72px] shrink-0 items-center justify-center rounded-md bg-[linear-gradient(154deg,#2A8EF9_23.37%,#175CB6_91.91%)] disabled:pointer-events-none disabled:opacity-75"
+    >
+      {disabled && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <TypeAnimation />
+        </div>
+      )}
+
+      <Image
+        unoptimized
+        src={"/up-arrow.svg"}
+        alt="search"
+        width={24}
+        height={24}
+        className={disabled ? "invisible" : ""}
+      />
+    </button>
+  );
 
   return (
     <form
@@ -55,30 +79,11 @@ const FinalInputArea: FC<TInputAreaProps> = ({
           value={promptValue}
           onKeyDown={handleKeyDown}
           required
-          onChange={(e) => setPromptValue(e.target.value)}
+          onChange={handleChange}
           rows={1}
         />
       </div>
-      <button
-        disabled={disabled}
-        type="submit"
-        className="relative ml-3 flex size-[72px] shrink-0 items-center justify-center rounded-md bg-[linear-gradient(154deg,#2A8EF9_23.37%,#175CB6_91.91%)] disabled:pointer-events-none disabled:opacity-75"
-      >
-        {disabled && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <TypeAnimation />
-          </div>
-        )}
-
-        <Image
-          unoptimized
-          src={"/up-arrow.svg"}
-          alt="search"
-          width={24}
-          height={24}
-          className={disabled ? "invisible" : ""}
-        />
-      </button>
+      {renderSubmitButton()}
     </form>
   );
 };

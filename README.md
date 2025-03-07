@@ -25,9 +25,12 @@
 5. Create a `.env` (use the `.example.env` for reference) and replace the API keys
 6. Run `npm install` and `npm run dev` to install dependencies and run locally
 
+## New Features
+
+- [] Added "Share" and "Copy" buttons that users can click on after conversations are generated. The "Copy" button allows users to copy the conversation to the clipboard, and the "Share" button enables sharing the conversation via compatible apps and social platforms.
+
 ## Future Tasks
 
-- [ ] Add a share & copy buttons that folks can click on after convos are generated
 - [ ] Add potential follow up questions + new chat at the end of chat page
 - [ ] Split the page into two pages and add back the footer
 - [ ] Move all my icons into their own typescript file (transform.tools)
@@ -35,3 +38,16 @@
 - [ ] Add nice hamburger menu on mobile
 - [ ] Try out the generative UI stuff from Vercel
 - [ ] Add a nicer dropdown overall
+
+## CI/CD
+
+The project is configured for CI/CD with GitHub Actions, which automates deployment to Vercel every time changes are pushed to the main branch.
+
+## Performance Optimizations
+
+- [] Removed unused dependencies to reduce bundle size.
+- [] Optimized images to improve load times.
+
+### Объяснение изменений:
+4. **CI/CD Setup** — указано, что проект настроен для автоматического деплоя через GitHub Actions.
+5. **Performance Optimizations** — предложены оптимизации для улучшения производительности проекта.

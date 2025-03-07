@@ -1,11 +1,17 @@
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import FinalInputArea from "./FinalInputArea";
-import { useEffect, useRef, useState } from "react";
-import simpleLogo from "../public/simple-logo.png";
+import { FaClipboard, FaShareAlt } from "react-icons/fa";
 import Image from "next/image";
-import { FaClipboard, FaShareAlt } from "react-icons/fa"; // Importing icons
+import simpleLogo from "../public/simple-logo.png";
 
-export default function Chat({
+const LoadingState = () => (
+  <div className="flex justify-center items-center">
+    <span className="text-gray-500">Loading...</span>
+  </div>
+);
+
+const Chat = ({
   messages,
   disabled,
   promptValue,
@@ -18,65 +24,49 @@ export default function Chat({
   disabled: boolean;
   promptValue: string;
   setPromptValue: React.Dispatch<React.SetStateAction<string>>;
-  setMessages: React.Dispatch<
-    React.SetStateAction<{ role: string; content: string }[]>
-  >;
+  setMessages: React.Dispatch<React.SetStateAction<{ role: string; content: string }[]>>;
   handleChat: () => void;
   topic: string;
-}) {
+}) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
   const [didScrollToBottom, setDidScrollToBottom] = useState(true);
   const [copiedMessage, setCopiedMessage] = useState(false);
 
-  function scrollToBottom() {
-    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-  }
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     if (didScrollToBottom) {
       scrollToBottom();
     }
-  }, [didScrollToBottom, messages]);
+  }, [didScrollToBottom, messages, scrollToBottom]);
 
   useEffect(() => {
-    let el = scrollableContainerRef.current;
-    if (!el) {
-      return;
-    }
+    const el = scrollableContainerRef.current;
+    if (!el) return;
 
-    function handleScroll() {
-      if (scrollableContainerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } =
-          scrollableContainerRef.current;
-        setDidScrollToBottom(scrollTop + clientHeight >= scrollHeight);
-      }
-    }
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      setDidScrollToBottom(scrollTop + clientHeight >= scrollHeight);
+    };
 
     el.addEventListener("scroll", handleScroll);
-
-    return () => {
-      el.removeEventListener("scroll", handleScroll);
-    };
+    return () => el.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Function to copy chat content to clipboard
-  const copyToClipboard = () => {
+  const handleClipboardAction = async (action: 'copy' | 'share') => {
     const chatContent = messages.map(msg => msg.content).join("\n");
-    navigator.clipboard.writeText(chatContent).then(() => {
-      setCopiedMessage(true);
-      setTimeout(() => {
-        setCopiedMessage(false); // Hide the message after 2 seconds
-      }, 2000);
-    }).catch(() => {
-      setCopiedMessage(false); // In case of failure, hide the message
-    });
-  };
-
-  // Function to share chat content (for mobile)
-  const shareChat = async () => {
-    const chatContent = messages.map(msg => msg.content).join("\n");
-    if (navigator.share) {
+    if (action === 'copy') {
+      try {
+        await navigator.clipboard.writeText(chatContent);
+        setCopiedMessage(true);
+        setTimeout(() => setCopiedMessage(false), 2000);
+      } catch {
+        setCopiedMessage(false);
+      }
+    } else if (action === 'share' && navigator.share) {
       try {
         await navigator.share({
           title: "Chat Conversation",
@@ -98,74 +88,36 @@ export default function Chat({
           <b>Topic: </b>
           {topic}
         </p>
-        <div
-          ref={scrollableContainerRef}
-          className="mt-2 overflow-y-scroll rounded-lg border border-solid border-[#C2C2C2] bg-white px-5 lg:p-7"
-        >
+        <div ref={scrollableContainerRef} className="mt-2 overflow-y-scroll rounded-lg border border-solid border-[#C2C2C2] bg-white px-5 lg:p-7">
           {messages.length > 2 ? (
             <div className="prose-sm max-w-5xl lg:prose lg:max-w-full">
-              {messages.slice(2).map((message, index) =>
-                message.role === "assistant" ? (
-                  <div className="relative w-full" key={index}>
-                    <Image
-                      src={simpleLogo}
-                      alt=""
-                      className="absolute left-0 top-0 !my-0 size-7"
-                    />
-                    <ReactMarkdown className="w-full pl-10">
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <p
-                    key={index}
-                    className="ml-auto w-fit rounded-xl bg-blue-500 p-4 font-medium text-white"
-                  >
-                    {message.content}
-                  </p>
-                ),
-              )}
+              {messages.slice(2).map((message, index) => (
+                <div key={index} className="relative w-full">
+                  {message.role === "assistant" && (
+                    <Image src={simpleLogo} alt="" className="absolute left-0 top-0 !my-0 size-7" loading="lazy" />
+                  )}
+                  <ReactMarkdown className="w-full pl-10">{message.content}</ReactMarkdown>
+                </div>
+              ))}
               <div ref={messagesEndRef} />
             </div>
           ) : (
-            <div className="flex w-full flex-col gap-4 py-5">
-              {Array.from(Array(10).keys()).map((i) => (
-                <div
-                  key={i}
-                  className={`${i < 5 && "hidden sm:block"} h-10 animate-pulse rounded-md bg-gray-300`}
-                  style={{ animationDelay: `${i * 0.05}s` }}
-                />
-              ))}
-            </div>
+            <LoadingState />
           )}
         </div>
-
-        {/* Add share and copy buttons below the chat */}
         {messages.length > 0 && (
           <div className="flex justify-end mt-4 space-x-4">
-            <button
-              onClick={copyToClipboard}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow-md text-gray-700 hover:bg-gray-100"
-            >
+            <button onClick={() => handleClipboardAction('copy')} className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow-md text-gray-700 hover:bg-gray-100">
               <FaClipboard />
               <span>Copy</span>
             </button>
-            <button
-              onClick={shareChat}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow-md text-blue-500 hover:bg-blue-50"
-            >
+            <button onClick={() => handleClipboardAction('share')} className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow-md text-blue-500 hover:bg-blue-50">
               <FaShareAlt />
               <span>Share</span>
             </button>
           </div>
         )}
-
-        {/* Pop-up notification for copied message */}
-        {copiedMessage && (
-          <div className="fixed bottom-4 left-4 bg-green-500 text-white p-3 rounded-md shadow-md">
-            Copied to clipboard!
-          </div>
-        )}
+        {copiedMessage && <div className="fixed bottom-4 left-4 bg-green-500 text-white p-3 rounded-md shadow-md">Copied to clipboard!</div>}
       </div>
 
       <div className="bg-white lg:p-4">
@@ -180,4 +132,6 @@ export default function Chat({
       </div>
     </div>
   );
-}
+};
+
+export default Chat;

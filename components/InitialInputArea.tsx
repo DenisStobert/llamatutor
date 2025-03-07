@@ -12,6 +12,23 @@ type TInputAreaProps = {
   handleInitialChat: () => void;
 };
 
+const AgeGroupSelect: FC<{ value: string; onChange: (value: string) => void }> = ({ value, onChange }) => (
+  <select
+    id="grade"
+    name="grade"
+    className="ring-none h-full rounded-md rounded-r-lg border-0 bg-transparent px-2 text-sm font-medium text-black focus:ring-0 sm:text-base"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+  >
+    <option>Elementary School</option>
+    <option>Middle School</option>
+    <option>High School</option>
+    <option>College</option>
+    <option>Undergrad</option>
+    <option>Graduate</option>
+  </select>
+);
+
 const InitialInputArea: FC<TInputAreaProps> = ({
   promptValue,
   setPromptValue,
@@ -21,24 +38,19 @@ const InitialInputArea: FC<TInputAreaProps> = ({
   setAgeGroup,
 }) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
-      if (e.shiftKey) {
-        return;
-      } else {
-        e.preventDefault();
-        handleInitialChat();
-      }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleInitialChat();
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleInitialChat();
+  };
+
   return (
-    <form
-      className="mx-auto flex w-full flex-col items-center justify-between gap-4 sm:flex-row sm:gap-0"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleInitialChat();
-      }}
-    >
+    <form className="mx-auto flex w-full flex-col items-center justify-between gap-4 sm:flex-row sm:gap-0" onSubmit={handleSubmit}>
       <div className="flex w-full rounded-lg border">
         <textarea
           placeholder="Teach me about..."
@@ -51,22 +63,10 @@ const InitialInputArea: FC<TInputAreaProps> = ({
           rows={1}
         />
         <div className="flex items-center justify-center">
-          <select
-            id="grade"
-            name="grade"
-            className="ring-none h-full rounded-md rounded-r-lg border-0 bg-transparent px-2 text-sm font-medium text-black focus:ring-0 sm:text-base"
-            value={ageGroup}
-            onChange={(e) => setAgeGroup(e.target.value)}
-          >
-            <option>Elementary School</option>
-            <option>Middle School</option>
-            <option>High School</option>
-            <option>College</option>
-            <option>Undergrad</option>
-            <option>Graduate</option>
-          </select>
+          <AgeGroupSelect value={ageGroup} onChange={setAgeGroup} />
         </div>
       </div>
+
       <button
         disabled={disabled}
         type="submit"
