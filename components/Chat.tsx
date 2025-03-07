@@ -3,6 +3,7 @@ import FinalInputArea from "./FinalInputArea";
 import { useEffect, useRef, useState } from "react";
 import simpleLogo from "../public/simple-logo.png";
 import Image from "next/image";
+import { FaClipboard, FaShareAlt } from "react-icons/fa"; // Importing icons
 
 export default function Chat({
   messages,
@@ -26,6 +27,7 @@ export default function Chat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
   const [didScrollToBottom, setDidScrollToBottom] = useState(true);
+  const [copiedMessage, setCopiedMessage] = useState(false);
 
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
@@ -57,6 +59,37 @@ export default function Chat({
       el.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  // Function to copy chat content to clipboard
+  const copyToClipboard = () => {
+    const chatContent = messages.map(msg => msg.content).join("\n");
+    navigator.clipboard.writeText(chatContent).then(() => {
+      setCopiedMessage(true);
+      setTimeout(() => {
+        setCopiedMessage(false); // Hide the message after 2 seconds
+      }, 2000);
+    }).catch(() => {
+      setCopiedMessage(false); // In case of failure, hide the message
+    });
+  };
+
+  // Function to share chat content (for mobile)
+  const shareChat = async () => {
+    const chatContent = messages.map(msg => msg.content).join("\n");
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Chat Conversation",
+          text: chatContent,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      alert("Sharing is not supported on this device.");
+    }
+  };
 
   return (
     <div className="flex grow flex-col gap-4 overflow-hidden">
@@ -106,6 +139,33 @@ export default function Chat({
             </div>
           )}
         </div>
+
+        {/* Add share and copy buttons below the chat */}
+        {messages.length > 0 && (
+          <div className="flex justify-end mt-4 space-x-4">
+            <button
+              onClick={copyToClipboard}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow-md text-gray-700 hover:bg-gray-100"
+            >
+              <FaClipboard />
+              <span>Copy</span>
+            </button>
+            <button
+              onClick={shareChat}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-gray-300 shadow-md text-blue-500 hover:bg-blue-50"
+            >
+              <FaShareAlt />
+              <span>Share</span>
+            </button>
+          </div>
+        )}
+
+        {/* Pop-up notification for copied message */}
+        {copiedMessage && (
+          <div className="fixed bottom-4 left-4 bg-green-500 text-white p-3 rounded-md shadow-md">
+            Copied to clipboard!
+          </div>
+        )}
       </div>
 
       <div className="bg-white lg:p-4">
